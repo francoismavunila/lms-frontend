@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import BookForm from './BookForm';
 import BookEditForm from './BookEditForm';
+import BookDetailsModal from './BookDetailsModal';
 
 const departments = ["All", "Science", "Social Sciences", "Arts", "Engineering"];
 const genres = ["All", "Academic", "Fiction", "Reference", "Journal"];
@@ -26,6 +27,7 @@ export default function BookCatalog() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [isAddingBook, setIsAddingBook] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
+  const [viewingBook, setViewingBook] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const router = useRouter();
 
@@ -235,6 +237,12 @@ export default function BookCatalog() {
                   </span>
                 ))}
               </div>
+              <button
+                onClick={() => setViewingBook(book)}
+                className="mt-2 text-blue-600 hover:underline"
+              >
+                View Details
+              </button>
             </div>
           </div>
         ))}
@@ -252,6 +260,13 @@ export default function BookCatalog() {
           book={editingBook}
           onSubmit={handleEditBook}
           onCancel={() => setEditingBook(null)}
+        />
+      )}
+      {viewingBook && (
+        <BookDetailsModal
+          book={viewingBook}
+          onClose={() => setViewingBook(null)}
+          userRole={userRole}
         />
       )}
     </div>

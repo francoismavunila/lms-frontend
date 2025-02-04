@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link';
 import { 
   Home,
-  User,
   BookOpen,
   Bookmark,
   ClipboardList,
@@ -13,7 +12,10 @@ import {
   Bell,
   Search,
   ChevronDown,
-  LogOut
+  LogOut,
+  Book,
+  Clock,
+  History
 } from 'lucide-react';
 
 export default function DashboardLayout({ children }) {
@@ -58,16 +60,55 @@ export default function DashboardLayout({ children }) {
     router.push('/login');
   };
 
-  const menuItems = [
-    { href: '/dashboard', icon: Home, label: 'Overview' },
-    { href: '/dashboard/catalog', icon: BookOpen, label: 'Book Catalog' },
-    { href: '/dashboard/borrow', icon: Bookmark, label: 'Borrow/Return' },
-    { href: '/dashboard/inventory', icon: ClipboardList, label: 'Inventory' },
-    { href: '/dashboard/reservations', icon: Bookmark, label: 'Reservations' },
-  ];
+  // Role-based menu items
+  const getMenuItems = (role) => {
+    const adminMenuItems = [
+      { href: '/dashboard', icon: Home, label: 'Overview' },
+      { href: '/dashboard/catalog', icon: BookOpen, label: 'Book Catalog' },
+      { href: '/dashboard/borrow', icon: Bookmark, label: 'Borrow/Return' },
+      { href: '/dashboard/inventory', icon: ClipboardList, label: 'Inventory' },
+      { href: '/dashboard/reservations', icon: Bookmark, label: 'Reservations' },
+    ];
+
+    const studentFacultyMenuItems = [
+      { href: '/dashboard', icon: Home, label: 'Overview' },
+      { href: '/dashboard/catalog', icon: Book, label: 'Browse Books' },
+      { href: '/dashboard/my-books', icon: BookOpen, label: 'My Books' },
+      { href: '/dashboard/reservations', icon: Clock, label: 'My Reservations' },
+      { href: '/dashboard/history', icon: History, label: 'Borrow History' },
+    ];
+
+    switch (role) {
+      case 'admin':
+        return adminMenuItems;
+      case 'librarian':
+        return adminMenuItems;
+      case 'student':
+        return studentFacultyMenuItems;
+      case 'faculty':
+        return studentFacultyMenuItems;
+      default:
+        return studentFacultyMenuItems;
+    }
+  };
+
+  // Close sidebar when clicking outside on mobile
+  const handleContentClick = () => {
+    if (isOpen) {
+      setIsOpen(false);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Overlay for mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-10 lg:hidden"
+          onClick={handleContentClick}
+        />
+      )}
+
       {/* Sidebar */}
       <aside className={`bg-black/90 text-white w-64 fixed h-full z-20 transition-transform duration-200 ease-in-out flex flex-col ${
         isOpen ? 'translate-x-0' : '-translate-x-full'
@@ -93,7 +134,7 @@ export default function DashboardLayout({ children }) {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">{user.name}</p>
                 <p className="text-xs text-gray-300 truncate">{user.email}</p>
-                <p className="text-xs text-gray-400 truncate">{user.role}</p>
+                <p className="text-xs text-gray-400 truncate capitalize">{user.role}</p>
               </div>
             </div>
           ) : (
@@ -101,13 +142,14 @@ export default function DashboardLayout({ children }) {
           )}
         </div>
         
-        {/* Main navigation */}
+        {/* Role-based navigation */}
         <nav className="mt-6 px-2 flex-1">
-          {menuItems.map((item) => (
+          {user && getMenuItems(user.role).map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-colors hover:bg-white/20 hover:text-white text-gray-200"
+              onClick={() => setIsOpen(false)}
             >
               <item.icon className="w-5 h-5" />
               {item.label}
@@ -120,6 +162,7 @@ export default function DashboardLayout({ children }) {
           <Link
             href="/dashboard/settings"
             className="flex items-center gap-3 px-4 py-3 text-sm rounded-lg transition-colors hover:bg-white/20 hover:text-white text-gray-200"
+            onClick={() => setIsOpen(false)}
           >
             <Settings className="w-5 h-5" />
             Settings
@@ -135,13 +178,16 @@ export default function DashboardLayout({ children }) {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 lg:ml-64">
-        {/* Top Navigation */}
+      <div className="flex-1 lg:ml-64" onClick={handleContentClick}>
+        {/* Rest of the code remains the same... */}
         <header className="bg-black/80 backdrop-blur-sm text-white h-16 fixed w-full lg:w-[calc(100%-16rem)] z-10">
           <div className="flex items-center justify-between h-full px-4">
             <div className="flex items-center gap-4">
               <button
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsOpen(!isOpen);
+                }}
                 className="lg:hidden p-2 hover:bg-white/20 rounded-lg transition-colors"
               >
                 <Menu className="w-5 h-5" />
@@ -163,7 +209,10 @@ export default function DashboardLayout({ children }) {
               
               <div className="relative">
                 <button
-                  onClick={() => setIsProfileOpen(!isProfileOpen)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsProfileOpen(!isProfileOpen);
+                  }}
                   className="flex items-center gap-2 p-2 hover:bg-white/20 rounded-lg transition-colors"
                 >
                   {user ? (
@@ -189,13 +238,18 @@ export default function DashboardLayout({ children }) {
                     <div className="px-4 py-3 border-b">
                       <p className="text-sm font-medium text-gray-900">{user.name}</p>
                       <p className="text-sm text-gray-600">{user.email}</p>
-                      <p className="text-xs text-gray-500">{user.role}</p>
+                      <p className="text-xs text-gray-500 capitalize">{user.role}</p>
                     </div>
                     <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Profile</a>
                     <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
                     <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Help</a>
                     <div className="border-t">
-                      <a href="#" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onClick={handleLogout}>Log out</a>
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={handleLogout}
+                      >
+                        Log out
+                      </button>
                     </div>
                   </div>
                 )}
