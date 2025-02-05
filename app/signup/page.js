@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { HomeIcon, PhoneIcon, UserIcon } from '@heroicons/react/24/outline';
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function Signup() {
   const router = useRouter();
@@ -43,7 +45,8 @@ export default function Signup() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Something went wrong');
+        const dataError = response.json()
+        throw new Error(dataError.detail || 'Something went wrong');
       }
 
       console.log(data)
@@ -52,8 +55,10 @@ export default function Signup() {
       
       // Redirect to dashboard or home page
       router.push('/login');
+      toast.success('Account created successfully!');
     } catch (err) {
       setError(err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -61,6 +66,7 @@ export default function Signup() {
 
   return (
     <div className="bg-white text-black font-sans min-h-screen">
+      <ToastContainer />
       <header className="bg-black text-white py-0 backdrop-blur-lg bg-opacity-90 fixed w-full z-50">
         <nav className="container mx-auto flex flex-wrap justify-between items-center px-4">
           <div className="flex items-center space-x-4">
