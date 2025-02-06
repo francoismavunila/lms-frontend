@@ -1,5 +1,7 @@
 import React from 'react';
 import { X, BookOpen, User2, Bookmark, LibraryBig, Layout, CheckCircle2, Clock } from 'lucide-react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const BookDetailsModal = ({ book, onClose, userRole }) => {
   const availableCopies = book.copies.filter(copy => copy.status === "available").length;
@@ -9,10 +11,38 @@ const BookDetailsModal = ({ book, onClose, userRole }) => {
   const statusColor = availableCopies > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700';
   const statusText = availableCopies > 0 ? 'Available' : 'Unavailable';
 
+  const reserveBook = async (bookId) => {
+    try {
+      const token = localStorage.getItem('lms_authToken');
+      console.log(token);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/reservations/reserve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ book_id: bookId })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.log(errorData.detail);
+        toast.error(errorData.detail);
+        return
+        // throw new Error('Failed to reserve book');
+      }
+
+      toast.success('Book reserved successfully');
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+      <ToastContainer position="top-right" />
       <div 
-        className="bg-white rounded-2xl w-[95%] max-w-4xl mx-auto shadow-2xl overflow-hidden"
+        className="bg-white rounded-2xl w-[95%] max-w-4xl mx-auto shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Section */}
@@ -40,7 +70,7 @@ const BookDetailsModal = ({ book, onClose, userRole }) => {
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-6 overflow-y-auto flex-1">
           <div className="grid md:grid-cols-3 gap-6">
             {/* Left Column - Image */}
             <div className="md:col-span-1">
@@ -58,7 +88,7 @@ const BookDetailsModal = ({ book, onClose, userRole }) => {
               {/* Quick Stats */}
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div className="bg-gray-50 p-4 rounded-xl">
-                  <div className="text-gray-500 text-sm mb-1 flex items-center gap-2">
+                  <div className="text-gray-500 text-sm mb-1 flex itemsCenter gap-2">
                     <CheckCircle2 className="w-4 h-4" /> Available
                   </div>
                   <div className="text-2xl font-bold text-gray-900">{availableCopies}</div>
@@ -105,24 +135,25 @@ const BookDetailsModal = ({ book, onClose, userRole }) => {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3 mt-8">
+        {/* Action Buttons */}
+        <div className="p-6 bg-gray-50 flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded-lg font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all duration-200"
+          >
+            Close
+          </button>
+          {availableCopies == 0 && userRole !== 'librarian' && (
             <button
-              onClick={onClose}
-              className="px-4 py-2 rounded-lg font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all duration-200"
+              onClick={() => reserveBook(book.id)}
+              className="px-4 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 flex items-center gap-2"
             >
-              Close
+              <Bookmark className="w-4 h-4" />
+              Reserve Book
             </button>
-            {availableCopies > 0 && userRole !== 'librarian' && (
-              <button
-                className="px-4 py-2 rounded-lg font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all duration-200 flex items-center gap-2"
-              >
-                <Bookmark className="w-4 h-4" />
-                Reserve Book
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
     </div>
