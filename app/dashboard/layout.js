@@ -1,7 +1,8 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Notifications from './notification';
 import { 
   Home,
   BookOpen,
@@ -15,13 +16,17 @@ import {
   LogOut,
   Book,
   Clock,
-  History
+  History,
+  Users
 } from 'lucide-react';
 
 export default function DashboardLayout({ children }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [notifications, setNotifications] = useState([]);
+  const [error, setError] = useState(null);
   const router = useRouter();
   
   const backend_url = process.env.NEXT_PUBLIC_BACKEND_URL;
@@ -52,7 +57,29 @@ export default function DashboardLayout({ children }) {
       }
     };
 
+    const fetchNotifications = async () => {
+      const token = localStorage.getItem('lms_authToken');
+      try {
+        const response = await fetch(`${backend_url}/api/v1/notifications/user`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setNotifications(data);
+        } else {
+          setError('Failed to fetch notifications');
+        }
+      } catch (error) {
+        setError('Error fetching notifications');
+      }
+    };
+
     fetchUser();
+    fetchNotifications();
   }, [router, backend_url]);
 
   const handleLogout = () => {
@@ -68,6 +95,15 @@ export default function DashboardLayout({ children }) {
       { href: '/dashboard/borrow', icon: Bookmark, label: 'Borrow/Return' },
       { href: '/dashboard/inventory', icon: ClipboardList, label: 'Inventory' },
       { href: '/dashboard/reservations', icon: Bookmark, label: 'Reservations' },
+      { href: '/dashboard/manage-librarians', icon: Users, label: 'Manage Librarians' },
+    ];
+
+    const librarianMenuItems = [
+      { href: '/dashboard', icon: Home, label: 'Overview' },
+      { href: '/dashboard/catalog', icon: BookOpen, label: 'Book Catalog' },
+      { href: '/dashboard/borrow', icon: Bookmark, label: 'Borrow/Return' },
+      { href: '/dashboard/inventory', icon: ClipboardList, label: 'Inventory' },
+      { href: '/dashboard/reservations', icon: Bookmark, label: 'Reservations' }
     ];
 
     const studentFacultyMenuItems = [
@@ -82,7 +118,7 @@ export default function DashboardLayout({ children }) {
       case 'admin':
         return adminMenuItems;
       case 'librarian':
-        return adminMenuItems;
+        return librarianMenuItems;
       case 'student':
         return studentFacultyMenuItems;
       case 'faculty':
@@ -98,6 +134,8 @@ export default function DashboardLayout({ children }) {
       setIsOpen(false);
     }
   };
+
+  const unreadNotificationsCount = notifications.filter(notification => !notification.is_read).length;
 
   return (
     <div className="flex h-screen bg-gray-80">
@@ -202,9 +240,20 @@ export default function DashboardLayout({ children }) {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
-              <button className="p-2 hover:bg-white/20 rounded-lg transition-colors">
+            <div className="flex items-center gap-4 relative">
+              <button 
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors relative"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsNotificationsOpen(!isNotificationsOpen);
+                }}
+              >
                 <Bell className="w-5 h-5" />
+                {unreadNotificationsCount > 0 && (
+                  <span className="absolute top-0 right-0 inline-block w-4 h-4 bg-red-500 text-white text-xs font-bold rounded-full text-center">
+                    {unreadNotificationsCount}
+                  </span>
+                )}
               </button>
               
               <div className="relative">
@@ -257,6 +306,16 @@ export default function DashboardLayout({ children }) {
             </div>
           </div>
         </header>
+
+        {/* Notifications Card */}
+        {isNotificationsOpen && (
+          <div className="absolute top-16 right-4 w-80 bg-white rounded-lg shadow-lg z-20">
+            <div className="p-4">
+              <h2 className="text-lg font-semibold text-gray-800 mb-2">Notifications</h2>
+              <Notifications />
+            </div>
+          </div>
+        )}
 
         {/* Main Content Area */}
         <main className="pt-16 min-h-screen bg-gray-50">
