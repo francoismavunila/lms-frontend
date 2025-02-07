@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { HomeIcon, InformationCircleIcon, PhoneIcon, UserIcon, BookOpenIcon, BookmarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 export default function Home() {
@@ -11,6 +12,11 @@ export default function Home() {
     setIsOpen(!isOpen);
   };
 
+  const router = useRouter();
+
+  const handleEnterClick = () => {
+    router.push('/dashboard');
+  };
   return (
     <div className="bg-white text-black font-sans">
       <header className="bg-black text-white py-0 backdrop-blur-lg bg-opacity-90 fixed w-full z-50">
@@ -54,9 +60,14 @@ export default function Home() {
         <div className="text-center bg-black bg-opacity-50 p-8 rounded-2xl backdrop-blur-sm">
           <h1 className="text-4xl md:text-4xl font-bold text-white">
             <span className="text-white">Welcome to Lupane State University</span><br />
-            <span className="text-white text-5xl md:text-7xl bg-clip-text">Library</span>
+            {/* <button
+            onClick={handleEnterClick}
+            className="mt-4 px-12 py-4 bg-secondary text-white font-semibold rounded-full border-2 border-primary hover:bg-secondary-dark transition-colors shadow-lg"
+          >
+            Enter
+          </button> */}
           </h1>
-          <button className="mt-6 px-12 py-4 bg-secondary text-black font-semibold rounded-full border-2 border-primary hover:bg-secondary-dark transition-all duration-300 hover:scale-105 shadow-lg">
+          <button onClick={handleEnterClick} className="mt-6 px-12 py-4 bg-secondary text-black font-semibold rounded-full border-2 border-primary hover:bg-secondary-dark transition-all duration-300 hover:scale-105 shadow-lg">
             Enter
           </button>
         </div>
